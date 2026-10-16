@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Доска лидеров 2048</title>
+    <style>
+        :root {
+            --bg: #faf8ef;
+            --text: #776e65;
+            --header-bg: #bbada0;
+            --table-header: #8f7a66;
+            --rank-bg-1: #f39c12;
+            --rank-bg-2: #bdc3c7;
+            --rank-bg-3: #e67e22;
+            --row-odd: #f9f6f2;
+            --row-even: #eee4da;
+            --border: #d4c9b8;
+        }
+
+        body {
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .page-title {
+            text-align: center;
+            color: var(--header-bg);
+            font-size: 50px;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            text-shadow: 0 2px 3px rgba(0,0,0,0.2);
+        }
+
+        .page-subtitle {
+            text-align: center;
+            color: #f9f6f2;
+            margin: 0 0 50px 0;
+            font-size: 16px;
+        }
+
+        .leaderboard-section {
+            margin-bottom: 50px;
+            background-color: var(--header-bg);
+            border-radius: 10px;
+            padding: 20px 30px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .mode-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin: 0 0 15px 0;
+            color: #f9f6f2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .badge-cm {
+            background-color: #3498db;
+            color: #fff;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+        }
+
+        .leaderboard-wrap {
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--row-odd);
+        }
+
+        thead {
+            background-color: var(--table-header);
+            color: #f9f6f2;
+        }
+
+        th {
+            padding: 15px 10px;
+            font-size: 14px;
+            font-weight: 600;
+            text-align: left;
+            border-bottom: 2px solid rgba(255,255,255,0.2);
+        }
+
+        tbody tr {
+            background-color: var(--row-odd);
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: var(--row-even);
+        }
+
+        tbody tr:hover {
+            background-color: #eae0d6;
+        }
+
+        td {
+            padding: 14px 10px;
+            font-size: 15px;
+            font-weight: 500;
+            border-top: 1px solid var(--border);
+        }
+
+        .rank-cell {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+            position: relative;
+        }
+
+        .rank-cell::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+        }
+
+        .rank-1::after { background-color: var(--rank-bg-1); }
+        .rank-2::after { background-color: var(--rank-bg-2); }
+        .rank-3::after { background-color: var(--rank-bg-3); }
+
+        .rank-1, .rank-2, .rank-3 {
+            color: #fff;
+        }
+
+        .score-cell {
+            text-align: right;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #95a5a6;
+            font-style: italic;
+            padding: 40px 10px;
+            font-size: 14px;
+        }
+
+        @media (max-width: 600px) {
+            .leaderboard-section { padding: 15px 20px; }
+            .mode-title { font-size: 20px; }
+            th, td { padding: 12px 8px; font-size: 14px; }
+            .rank-cell { width: 35px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+<h1 class="page-title">2048</h1>
+<p class="page-subtitle">Доска лидеров по всем режимам</p>
+
+<!-- BASIC -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Basic</h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-basic"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- COMBO -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Combo</h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-combo"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- BLIND -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Blind</h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-blind"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- BLITZ -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Blitz</h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-blitz"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- INVERT -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Invert</h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-invert"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- BASIC CM -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Basic <span class="badge-cm">CM</span></h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-basic_cm"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- COMBO CM -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Combo <span class="badge-cm">CM</span></h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-combo_cm"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- BLIND CM -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Blind <span class="badge-cm">CM</span></h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-blind_cm"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- BLITZ CM -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Blitz <span class="badge-cm">CM</span></h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-blitz_cm"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- INVERT CM -->
+<div class="leaderboard-section">
+    <h2 class="mode-title">Invert <span class="badge-cm">CM</span></h2>
+    <div class="leaderboard-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Место</th>
+                <th>Имя</th>
+                <th>Рекорд</th>
+            </tr>
+            </thead>
+            <tbody id="table-invert_cm"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // === БАЗА ДАННЫХ ===
+    // Сюда вписываются рекорды. 
+    // Для обычных режимов: число.
+    // Для CM режимов: строка "X + число".
+    const records = {
+        basic: [
+            {name: "LevIpapa", score: 66736},
+            {name: "LevIpapa", score: 7124},
+            {name: "LevIpapa", score: 3172},
+          {name: "LevIpapa", score: 2420},
+          {name: "LevIpapa", score: 1652},
+          {name: "LevIpapa", score: 1616},
+          {name: "LevIpapa", score: 1448},
+          {name: "LevIpapa", score: 1384},
+          {name: "LevIpapa", score: 1136},
+          {name: "LevIpapa", score: 740},
+        ],
+        combo: [
+          {name: "LevIpapa", score: 1116660},
+          {name: "LevIpapa", score: 378256},
+          {name: "LevIpapa", score: 199404},
+        ],
+        blind: [
+          {name: "LevIpapa", score: 15348},
+          {name: "LevIpapa", score: 3296},
+          {name: "LevIpapa", score: 2984},
+          {name: "LevIpapa", score: 2628},
+          {name: "LevIpapa", score: 848},
+        ],
+        blitz: [
+          {name: "LevIpapa", score: 6004},
+          {name: "LevIpapa", score: 3312},
+          {name: "LevIpapa", score: 2528},
+          {name: "LevIpapa", score: 1608},
+          {name: "LevIpapa", score: 1376},
+          {name: "LevIpapa", score: 1232},
+        ],
+        invert: [
+          {name: "LevIpapa", score: 1480},
+          {name: "LevIpapa", score: 372},
+        ],
+        basic_cm: [
+            {name: "LevIpapa", score: "X + 29"},
+        ],
+        combo_cm: [
+            {name: "LevIpapa", score: "X + 32"},
+          
+        ],
+        blind_cm: [
+            {name: "LevIpapa", score: "X + 24"},
+          
+        ],
+        blitz_cm: [
+            {name: "LevIpapa", score: "X + 30"},
+        ],
+        invert_cm: [
+            {name: "LevIpapa", score: "X + 20"},
+        ]
+    };
+
+    // Сохранение в localStorage (на случай, если вы решите вернуть поля ввода)
+    localStorage.setItem('game2048_records', JSON.stringify(records));
+
+    // Функция для извлечения числа из строки CM (например, "X + 2048" -> 2048)
+    function getCmScoreValue(scoreStr) {
+        if (!scoreStr) return 0;
+        const parts = scoreStr.split('+');
+        return parseInt(parts[parts.length - 1].trim());
+    }
+
+    // Функция для красивого форматирования чисел (1000 -> 1 000)
+    function formatNumber(n) {
+        return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    }
+
+    // Функция рендера таблицы
+    function renderTable(modeKey, containerId) {
+        const container = document.getElementById(containerId);
+        const data = records[modeKey] || [];
+
+        // Определяем, CM это режим или нет
+        const isCM = modeKey.includes('_cm');
+
+        // Сортируем данные: для CM по числу внутри строки, для обычных — по числу
+        const sorted = data.slice().sort((a, b) => {
+            const scoreA = isCM ? getCmScoreValue(a.score) : a.score;
+            const scoreB = isCM ? getCmScoreValue(b.score) : b.score;
+            return scoreB - scoreA;
+        });
+
+        // Оставляем только топ-10
+        const top10 = sorted.slice(0, 10);
+
+        if (top10.length === 0) {
+            container.innerHTML = '<tr><td colspan="3" class="empty-msg">Рекордов пока нет</td></tr>';
+            return;
+        }
+
+        container.innerHTML = '';
+        top10.forEach((entry, index) => {
+            const tr = document.createElement('tr');
+            
+            let rankClass = '';
+            if (index === 0) rankClass = 'rank-1';
+            else if (index === 1) rankClass = 'rank-2';
+            else if (index === 2) rankClass = 'rank-3';
+
+            tr.innerHTML = `
+                <td class="rank-cell ${rankClass}">${index + 1}</td>
+                <td>${entry.name}</td>
+                <td class="score-cell">${entry.score}</td>
+            `;
+            container.appendChild(tr);
+        });
+    }
+
+    // Список всех режимов и ID их таблиц
+    const modes = [
+        {key: 'basic', id: 'table-basic'},
+        {key: 'combo', id: 'table-combo'},
+        {key: 'blind', id: 'table-blind'},
+        {key: 'blitz', id: 'table-blitz'},
+        {key: 'invert', id: 'table-invert'},
+        {key: 'basic_cm', id: 'table-basic_cm'},
+        {key: 'combo_cm', id: 'table-combo_cm'},
+        {key: 'blind_cm', id: 'table-blind_cm'},
+        {key: 'blitz_cm', id: 'table-blitz_cm'},
+        {key: 'invert_cm', id: 'table-invert_cm'}
+    ];
+
+    // Отрисовываем все таблицы при загрузке страницы
+    modes.forEach(mode => {
+        renderTable(mode.key, mode.id);
+    });
+</script>
+
+</body>
+</html>
